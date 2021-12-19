@@ -1,1 +1,5 @@
 .idea
+.env
+
+configs/jwt/*
+!configs/jwt/.gitignore
