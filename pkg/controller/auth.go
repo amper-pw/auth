@@ -11,41 +11,55 @@ import (
 	ru_translations "github.com/go-playground/validator/v10/translations/ru"
 	"github.com/sirupsen/logrus"
 	"net/http"
+	"strings"
 )
-
-func (s *Controller) testAction(ctx *gin.Context) {
-	var form forms.SignIn
-
-	if err := ctx.BindJSON(&form); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err.Error())
-		return
-	}
-
-	token, err := s.services.AuthService.GenerateToken(form.Username, form.Password)
-
-	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	ctx.JSON(http.StatusOK, structs.Map(&responses.SignIn{
-		Token: token,
-	}))
-
-}
 
 func (s *Controller) signIn(ctx *gin.Context) {
 	var form forms.SignIn
 
-	if err := ctx.BindJSON(&form); err != nil {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, err.Error())
+	translator := ru.New()
+	uni := ut.New(translator, translator)
+	trans, found := uni.GetTranslator("ru")
+	if !found {
+		logrus.Fatal("translator not found")
+	}
+
+	validate := validator.New()
+
+	if err := ru_translations.RegisterDefaultTranslations(validate, trans); err != nil {
+		logrus.Fatal("translator not found")
+	}
+
+	if err := ctx.ShouldBindJSON(&form); err != nil {
+		logrus.Error(err.Error())
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(&responses.ErrorResponse{
+			Errors: map[string][]string{
+				"common": {"internal server error"},
+			},
+		}))
+		return
+	}
+
+	if err := validate.Struct(&form); err != nil {
+		errorsArray := make(map[string][]string)
+		for _, e := range err.(validator.ValidationErrors) {
+			fieldName := strings.ToLower(e.Field())
+			errorsArray[fieldName] = append(errorsArray[fieldName], e.Translate(trans))
+		}
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(&responses.ErrorResponse{
+			Errors: errorsArray,
+		}))
 		return
 	}
 
 	token, err := s.services.AuthService.GenerateToken(form.Username, form.Password)
 
 	if err != nil {
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, err.Error())
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, structs.Map(&responses.ErrorResponse{
+			Errors: map[string][]string{
+				"common": {"internal server error"},
+			},
+		}))
 		return
 	}
 
@@ -73,18 +87,24 @@ func (c *Controller) signUp(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&form); err != nil {
 		logrus.Error(err.Error())
+
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(&responses.ErrorResponse{
-			Message: "error",
+			Errors: map[string][]string{
+				"common": {"internal server error"},
+			},
 		}))
 		return
 	}
 
 	if err := validate.Struct(&form); err != nil {
+		errorsArray := make(map[string][]string)
 		for _, e := range err.(validator.ValidationErrors) {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(&responses.ErrorResponse{
-				Message: e.Translate(trans),
-			}))
+			fieldName := strings.ToLower(e.Field())
+			errorsArray[fieldName] = append(errorsArray[fieldName], e.Translate(trans))
 		}
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, structs.Map(&responses.ErrorResponse{
+			Errors: errorsArray,
+		}))
 		return
 	}
 
@@ -92,7 +112,9 @@ func (c *Controller) signUp(ctx *gin.Context) {
 	if err != nil {
 		logrus.Error(err.Error())
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, structs.Map(&responses.ErrorResponse{
-			Message: "internal server error",
+			Errors: map[string][]string{
+				"common": {"internal server error"},
+			},
 		}))
 		return
 	}

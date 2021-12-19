@@ -5,14 +5,14 @@ import (
 	"github.com/amper-pw/auth/pkg/repository"
 )
 
-type IAuthService interface {
+type AuthServiceInterface interface {
 	RegisterUser(username, password string) (*model.User, error)
 	GenerateToken(username, password string) (string, error)
 	ParseToken(token string) (string, error)
 }
 
 type Service struct {
-	AuthService IAuthService
+	AuthService AuthServiceInterface
 }
 
 func NewServices(repos *repository.Repository) *Service {
