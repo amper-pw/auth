@@ -39,7 +39,6 @@ func main() {
 	}
 
 	db.AutoMigrate(&model.User{})
-	db.AutoMigrate(&model.UserProfile{})
 
 }
 
