@@ -1,5 +1,5 @@
 Создание базы данных. Логин ``postgres`` пароль ``qwerty``
-``docker run --name todo-db -e POSTGRES_PASSWORD='qwerty' -p 5436:5432 -d --rm postgres``
+``docker run --name auth-db -e POSTGRES_PASSWORD='qwerty' -p 5436:5432 -d --rm postgres``
 Запуск миграций
 ``go run cmd/migrate.go``
 Генерация ключей
