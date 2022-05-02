@@ -5,13 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type IUserRepository interface {
+type UserRepositoryInterface interface {
 	Create(username, password string) (*model.User, error)
 	FindUserByUsernameAndPassword(username, password string) (*model.User, error)
 }
 
 type Repository struct {
-	UserRepository IUserRepository
+	UserRepository UserRepositoryInterface
 }
 
 func NewRepository(db *gorm.DB) *Repository {

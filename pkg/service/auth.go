@@ -24,7 +24,7 @@ type tokenClaims struct {
 }
 
 type AuthService struct {
-	repository repository.IUserRepository
+	repository repository.UserRepositoryInterface
 }
 
 func (s *AuthService) ParseToken(accessToken string) (string, error) {
@@ -84,7 +84,7 @@ func (s *AuthService) RegisterUser(username, password string) (*model.User, erro
 	return s.repository.Create(username, generatePasswordHash(password))
 }
 
-func BuildAuthService(repos repository.IUserRepository) *AuthService {
+func BuildAuthService(repos repository.UserRepositoryInterface) *AuthService {
 	return &AuthService{repository: repos}
 }
 
